@@ -1,0 +1,115 @@
+# Copyright (c) 2026, FreeRTOS-RISCV-SMP Project
+# SPDX-License-Identifier: Apache-2.0
+
+# UDB Architecture Configuration for riscv64-sim.
+# riscv64-sim is an RV64IMAC SMP software simulator (M-mode only, no PMP, CLINT).
+---
+$schema: config_schema.json#
+kind: architecture configuration
+type: fully configured
+name: riscv64-sim
+description: FreeRTOS RISC-V SMP software simulator — RV64IMAC M-mode only
+
+implemented_extensions:
+  - { name: I,        version: "= 2.1"    }
+  - { name: M,        version: "= 2.0"    }
+  - { name: Zaamo,    version: "= 1.0.0"  } # Atomic AMO instructions (part of A)
+  - { name: Zalrsc,   version: "= 1.0.0"  } # LR/SC instructions (part of A)
+  - { name: C,        version: "= 2.0"    } # Compressed instructions
+  - { name: Zca,      version: "= 1.0.0"  } # Compressed integer subset of C
+  - { name: Zicsr,    version: "= 2.0"    }
+  - { name: Zifencei, version: "= 2.0"    }
+  - { name: Zicntr,   version: "= 2.0"    } # mcycle, minstret, time
+  - { name: Sm,       version: "= 1.11.0" } # Machine mode + interrupt/exception handling
+
+params:
+  # ── XLEN ──────────────────────────────────────────────────────────────────
+  MXLEN: 64
+
+  PHYS_ADDR_WIDTH: 64
+
+  # ── MISA ──────────────────────────────────────────────────────────────────
+  # misa reflects RV64IMAC; all bits are read-only.
+  MUTABLE_MISA_M: false
+  MUTABLE_MISA_C: false
+  MISA_CSR_IMPLEMENTED: true
+
+  # ── Endianness ────────────────────────────────────────────────────────────
+  M_MODE_ENDIANNESS: little
+
+  # ── Trap / exception behavior ─────────────────────────────────────────────
+  TRAP_ON_ECALL_FROM_M: true
+  TRAP_ON_EBREAK: true
+  TRAP_ON_UNIMPLEMENTED_INSTRUCTION: true
+  TRAP_ON_RESERVED_INSTRUCTION: true
+  TRAP_ON_UNIMPLEMENTED_CSR: true
+  # Simulator masks invalid CSR writes (no illegal-value trap for WLRL).
+  TRAP_ON_ILLEGAL_WLRL: false
+
+  # ── MTVAL reporting ───────────────────────────────────────────────────────
+  REPORT_VA_IN_MTVAL_ON_BREAKPOINT: false
+  REPORT_VA_IN_MTVAL_ON_LOAD_MISALIGNED: true
+  REPORT_VA_IN_MTVAL_ON_STORE_AMO_MISALIGNED: true
+  REPORT_VA_IN_MTVAL_ON_INSTRUCTION_MISALIGNED: false
+  REPORT_VA_IN_MTVAL_ON_LOAD_ACCESS_FAULT: true
+  REPORT_VA_IN_MTVAL_ON_STORE_AMO_ACCESS_FAULT: true
+  REPORT_VA_IN_MTVAL_ON_INSTRUCTION_ACCESS_FAULT: true
+  REPORT_ENCODING_IN_MTVAL_ON_ILLEGAL_INSTRUCTION: true
+  MTVAL_WIDTH: 64
+
+  # ── Misaligned load/store / atomics ──────────────────────────────────────
+  # Simulator raises EXC_LOAD_ADDR_MISALIGNED (cause=4) or
+  # EXC_STORE_ADDR_MISALIGNED (cause=6) for any misaligned load or store.
+  # Misaligned LR raises EXC_LOAD_ACCESS_FAULT (cause=5); misaligned SC/AMO
+  # raise EXC_STORE_AMO_ACCESS_FAULT (cause=7) — matching Spike behavior.
+  MISALIGNED_LDST: false
+  MISALIGNED_LDST_EXCEPTION_PRIORITY: low
+  MISALIGNED_AMO: false
+  LRSC_RESERVATION_STRATEGY: "reserve exactly enough to cover the access"
+  LRSC_FAIL_ON_VA_SYNONYM: false
+  LRSC_MISALIGNED_BEHAVIOR: "always raise access fault"
+  LRSC_FAIL_ON_NON_EXACT_LRSC: false
+
+  # ── CSR / implementation IDs ──────────────────────────────────────────────
+  MARCHID_IMPLEMENTED: true
+  ARCH_ID_VALUE: 0x00000005   # marchid = 5 (Berkeley Rocket, matches Spike default)
+  IMP_ID_VALUE:  0x00000000   # mimpid = 0 (not implemented; matches Spike default)
+  VENDOR_ID_BANK:   0x0       # mvendorid[31:7] = 0
+  VENDOR_ID_OFFSET: 0x0       # mvendorid[6:0]  = 0
+
+  # ── MTVEC ─────────────────────────────────────────────────────────────────
+  # Both direct (MODE=0) and vectored (MODE=1) are supported.
+  MTVEC_MODES: [0, 1]
+  MTVEC_ACCESS: rw
+  MTVEC_ILLEGAL_WRITE_BEHAVIOR: custom
+  MTVEC_BASE_ALIGNMENT_DIRECT: 4
+  MTVEC_BASE_ALIGNMENT_VECTORED: 4
+
+  # ── Sm params ─────────────────────────────────────────────────────────────
+  PRECISE_SYNCHRONOUS_EXCEPTIONS: true
+  MIMPID_IMPLEMENTED: true
+  PMA_GRANULARITY: 3         # Minimum 8-byte granularity
+
+  # Simulator does not implement mcountinhibit; all bits are read-only zero.
+  MCOUNTINHIBIT_IMPLEMENTED: false
+
+  # No PMP implemented.
+  NUM_PMP_ENTRIES: 0
+
+  # M-mode only: no lower-privilege counter enables needed.
+  MCOUNTENABLE_EN:
+    [false, false, false, false, false, false, false, false,
+     false, false, false, false, false, false, false, false,
+     false, false, false, false, false, false, false, false,
+     false, false, false, false, false, false, false, false]
+
+  # No hardware performance monitor counters implemented.
+  HPM_COUNTER_EN:
+    [false, false, false, false, false, false, false, false,
+     false, false, false, false, false, false, false, false,
+     false, false, false, false, false, false, false, false,
+     false, false, false, false, false, false, false, false]
+
+  # ── Zicntr params ─────────────────────────────────────────────────────────
+  # Simulator implements mcycle, minstret, cycle, instret, time (via CLINT mtime).
+  TIME_CSR_IMPLEMENTED: true

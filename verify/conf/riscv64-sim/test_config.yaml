@@ -1,0 +1,16 @@
+# test_config.yaml for riscv64-sim RV64IMAC software simulator
+# SPDX-License-Identifier: Apache-2.0
+#
+# DUT: riscv64-sim — RV64IMAC SMP software simulator (M-mode only)
+# Reference model: sail_riscv_sim
+#
+# Absolute paths for compiler_exe, objdump_exe, ref_model_exe, udb_config,
+# linker_script, and dut_include_dir are patched at build time by verify/Makefile.
+name: riscv64-sim
+compiler_exe: riscv-none-elf-gcc
+objdump_exe: riscv-none-elf-objdump
+ref_model_exe: spike
+ref_model_type: spike
+udb_config: riscv64-sim.yaml
+linker_script: link.ld
+dut_include_dir: .

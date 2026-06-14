@@ -1,0 +1,5 @@
+#!/bin/sh
+# Sail RISC-V reference model wrapper for riscv64-sim arch tests.
+# Delegates directly to sail_riscv_sim.
+# The __SAIL_BIN__ placeholder is substituted with the full path by the build system.
+exec "__SAIL_BIN__" "$@"

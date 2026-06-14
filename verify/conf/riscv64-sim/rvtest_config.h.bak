@@ -1,0 +1,13 @@
+// rvtest_config.h — riscv64-sim RV64IMAC rvtest configuration
+// SPDX-License-Identifier: Apache-2.0
+
+// Simulator has no PMP
+#define RVMODEL_PMP_GRAIN 0
+#define RVMODEL_NUM_PMPS  0
+
+// Zicntr is implemented (mcycle, minstret, time via CLINT mtime)
+#define ZICNTR_SUPPORTED
+
+// riscv64-sim is M-mode only — no U or S mode
+// #define U_SUPPORTED
+// #define S_SUPPORTED
