@@ -53,8 +53,7 @@ freertos_test: starting
   cores=2   workers=6    sem_slots=2   iter_fast=50   iter_slow=20
 test 1: context-switch stress       ... pass
 test 2: mutex contention            ... pass
-test 3: counting-sem + mutex        ...   (sem_slots=2, workers=6)
-pass
+test 3: counting-sem + mutex        ... pass
 test 4: task notifications          ... pass
 test 5: event group                 ... pass
 test 6: queue stress                ... pass
